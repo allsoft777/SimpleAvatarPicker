@@ -1,0 +1,214 @@
+buildscript {
+    dependencies {
+        classpath 'com.github.dcendents:android-maven-gradle-plugin:1.5'
+        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.7.3'
+        classpath "org.jfrog.buildinfo:build-info-extractor-gradle:4.4.15"
+    }
+}
+
+apply plugin: 'com.android.library'
+apply plugin: 'com.github.dcendents.android-maven'
+apply plugin: 'com.jfrog.bintray'
+apply plugin: "com.jfrog.artifactory"
+
+apply plugin: 'findbugs'
+task findbugs(type: FindBugs) {
+    ignoreFailures = true
+    classes = files("$project.buildDir/intermediates/classes/")
+    classpath = files()
+    source 'src'
+    include '**/*.java'
+    exclude '**/gen/**'
+    excludeFilter = file(rootDir.path + "/buildsystem/ci/findbugs_exclude.xml")
+
+    effort = 'max'
+    reportLevel = "high"
+
+    reports {
+        xml.enabled = true
+        html.enabled = false
+    }
+}
+
+apply plugin: 'pmd'
+task pmd(type: Pmd) {
+    ignoreFailures = true
+    ruleSetFiles = files(rootDir.path + "/buildsystem/ci/pmd_ruleset.xml")
+    ruleSets = []
+    source 'src'
+    include '**/*.java'
+    exclude '**/gen/**'
+
+    reports {
+        xml.enabled = true
+        html.enabled = false
+    }
+}
+
+android {
+    compileSdkVersion COMPILE_SDK_VERSION as int
+    buildToolsVersion BUILD_TOOLS_VERSION
+
+    defaultConfig {
+        minSdkVersion MIN_SDK_VERSION as int
+        targetSdkVersion TARGET_SDK_VERSION as int
+        versionCode VERSION_CODE as int
+        versionName VERSION_NAME
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+    }
+
+    buildTypes {
+        libraryVariants.all { variant ->
+            variant.outputs.each { output ->
+                def outputFile = output.outputFile
+                if (outputFile != null && outputFile.name.endsWith('.aar')) {
+                    def fileName = "${archivesBaseName}-${android.defaultConfig.versionName}.aar"
+                    output.outputFile = new File(outputFile.parent, fileName)
+                }
+            }
+        }
+
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    lintOptions {
+        def options = rootProject.ext.lintoptions
+
+        quiet options.quiet
+        abortOnError options.abortOnError
+        ignoreWarnings options.ignorewarnings
+        checkAllWarnings options.checkAllWarnings
+        checkReleaseBuilds options.checkReleaseBuilds
+        noLines options.noLines
+        showAll options.showAll
+        lintConfig file(rootDir.path + "/buildsystem/ci/lint.xml")
+        htmlReport options.htmlReport
+        xmlReport options.xmlReport
+    }
+}
+
+dependencies {
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+
+    /**
+     * Google Library
+     */
+    def googleDependencies = rootProject.ext.googleDependencies
+    compile googleDependencies.supportV4
+    compile googleDependencies.annotation
+    compile googleDependencies.appCompatV7
+    compile googleDependencies.recyclerview
+
+    /**
+     * Library
+     */
+    def libraryDependencies = rootProject.ext.libraryDependencies
+    compile libraryDependencies.rxJava
+
+    /**
+     * Test Dependency
+     */
+    def testDependencies = rootProject.ext.testDependencies
+    testCompile(testDependencies.junit) {
+        exclude group: 'org.hamcrest', module: 'hamcrest-core'
+    }
+    testCompile(testDependencies.mockito) {
+        exclude group: 'org.hamcrest', module: 'hamcrest-core'
+    }
+    testCompile(testDependencies.powermockJunit) {
+        exclude group: 'junit', module: 'junit'
+    }
+    testCompile(testDependencies.robolectric) {
+        exclude group: 'junit', module: 'junit'
+        exclude group: 'com.google.guava', module: 'guava'
+    }
+    testCompile testDependencies.hamcrest
+    testCompile testDependencies.powermockMockito
+    testCompile(testDependencies.robolectricShadowsHttpClient) {
+        exclude group: 'org.robolectric', module: 'robolectric'
+    }
+}
+
+String bintrayUser = System.getenv('BINTRAY_USER')
+String bintrayKey = System.getenv('BINTRAY_API_KEY')
+boolean isReleaseBuild = gradle.startParameter.taskNames.contains('bintrayUpload')
+
+version = isReleaseBuild ? VERSION_NAME : "$VERSION_NAME-SNAPSHOT"
+group = GROUP
+
+// Create source/javadoc artifacts for publishing
+apply from: "$rootDir/gradle/artifacts.gradle"
+
+install {
+    repositories.mavenInstaller.pom.project {
+        name POM_NAME
+        description POM_DESCRIPTION
+        packaging POM_PACKAGING
+        url POM_URL
+
+        licenses {
+            license {
+                name POM_LICENCE_NAME
+                url POM_LICENCE_URL
+                distribution POM_LICENCE_DIST
+            }
+        }
+
+        scm {
+            url POM_SCM_URL
+            connection POM_SCM_CONNECTION
+            developerConnection POM_SCM_DEV_CONNECTION
+        }
+
+        developers {
+            developer {
+                id POM_DEVELOPER_ID
+                name POM_DEVELOPER_NAME
+            }
+        }
+    }
+}
+
+artifactory {
+    contextUrl = 'https://oss.jfrog.org'
+
+    publish {
+        repository {
+            repoKey = 'oss-snapshot-local'
+
+            username = bintrayUser
+            password = bintrayKey
+        }
+
+        defaults {
+            publishConfigs('archives')
+        }
+    }
+}
+
+bintray {
+    configurations = ['archives']
+    publish = true
+    override = true
+
+    pkg {
+        repo = 'maven'
+        name = POM_NAME
+        licenses = ['Apache-2.0']
+        labels = ['avatar picker', 'crop', 'android']
+        websiteUrl = POM_URL
+        issueTrackerUrl = POM_URL_ISSUE
+        vcsUrl = POM_VCS_URL
+    }
+}
+
+bintray.user = bintrayUser
+bintray.key = bintrayKey
+
+def sync = bintray.pkg.version.mavenCentralSync
+sync.sync = true
+sync.user = bintrayUser
+sync.password = bintrayKey
