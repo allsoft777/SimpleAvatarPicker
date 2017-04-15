@@ -30,9 +30,35 @@ dependencies {
 
 ## Usage
 
-1. Pick an image from the gallery app.
+The library is using the FileProvider to retrieve a picked image from the gallery or camera app.
+So, you don't need to grant any storage permissions to your app. For the resource file of the avatar_picker_provider_paths.xml, you can use the library file or declare your own file.
+
+1. Declare the file provider in your application.
 ```java
-AvatarPicker avatarPicker = AvatarPickBuilder.build(this);
+// ...
+
+<application>
+    // ...
+    <provider
+        android:name="android.support.v4.content.FileProvider"
+        android:authorities="${applicationId}.fileprovider"
+        android:exported="false"
+        android:grantUriPermissions="true">
+    
+        <meta-data
+            android:name="android.support.FILE_PROVIDER_PATHS"
+            android:resource="@xml/avatar_picker_provider_paths"/>
+    </provider>
+</application>
+```
+
+2. Use it on your client layer.
+```java
+private static final String AVATAR_FILE_PROVIDER_AUTHORITY = BuildConfig.APPLICATION_ID + ".fileprovider";
+
+// 2.1 Pick an image from the gallery app.
+
+AvatarPicker avatarPicker = AvatarPickBuilder.build(this, AVATAR_FILE_PROVIDER_AUTHORITY);
 AvatarIntentBuilder builder = new AvatarIntentBuilder();
 builder
       .aspectX(1)
@@ -40,11 +66,11 @@ builder
       .outputX(1024)
       .outputY(1024);
 avatarPicker.pickAvatarFromGallery(builder);
-```
 
-2. Pick an image from the camera app.
-```java
-AvatarPicker avatarPicker = AvatarPickBuilder.build(this);
+
+// 2.2 Pick an image from the camera app.
+ 
+AvatarPicker avatarPicker = AvatarPickBuilder.build(this, AVATAR_FILE_PROVIDER_AUTHORITY);
 AvatarIntentBuilder builder = new AvatarIntentBuilder();
 builder
       .aspectX(1)
