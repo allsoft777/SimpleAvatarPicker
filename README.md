@@ -3,8 +3,7 @@
 Super simple library to pick an image from the gallery or camera application.
 
 ## Screenshot
-![](./gif/avatar_picker_from_camera.gif)
-<br>
+![](./gif/avatar_picker_from_camera.gif)__
 ![](./gif/avatar_picker_from_gallery.gif)
 
 
