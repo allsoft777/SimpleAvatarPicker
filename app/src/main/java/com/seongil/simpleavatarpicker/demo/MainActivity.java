@@ -49,6 +49,7 @@ public class MainActivity extends AppCompatActivity implements PictureChooserDia
     // ========================================================================
     // constants
     // ========================================================================
+    private static final String AVATAR_FILE_PROVIDER_AUTHORITY = BuildConfig.APPLICATION_ID + ".fileprovider";
 
     // ========================================================================
     // fields
@@ -79,7 +80,7 @@ public class MainActivity extends AppCompatActivity implements PictureChooserDia
             setSupportActionBar(toolbar);
         }
 
-        mAvatarPicker = AvatarPickBuilder.build(this);
+        mAvatarPicker = AvatarPickBuilder.build(this, AVATAR_FILE_PROVIDER_AUTHORITY);
         mProfileThumbnail = (ImageView) findViewById(R.id.user_profile_thumbnail);
         mProgressBar = (ProgressBar) findViewById(R.id.loading_bar);
 

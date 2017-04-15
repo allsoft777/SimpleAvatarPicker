@@ -57,9 +57,6 @@ public abstract class AbstractAvatarPicker implements AvatarPicker {
     private static final int REQ_CODE_PICK_AVATAR_FROM_CAMERA = REQ_CODE_IDENTIFICATOR + (1 << 11);
     private static final int REQ_CODE_CROP_AVATAR = REQ_CODE_IDENTIFICATOR + (1 << 12);
 
-    // the authority is defined on the AndroidManifes.xml file.
-    private static final String FILEPROVIDER_AUTHORITY = "com.seongil.avatarpicker.fileprovider";
-
     // the files path is defined in the file of the provider paths in the res/xml/
     private static final String FILES_PATH_ALIAS = "my_thumbnails";
     private static final String TIMESTAMP_FORMAT = "yyyyMMdd_HHmmss";
@@ -85,6 +82,8 @@ public abstract class AbstractAvatarPicker implements AvatarPicker {
     protected abstract Context getContext();
 
     protected abstract void startActivityForResult(@NonNull Intent intent, int requestCode);
+
+    protected abstract String getFileProviderAuthorities();
 
     @Override
     public void pickAvatarFromCamera(@Nullable AvatarIntentBuilder builder) {
@@ -134,7 +133,7 @@ public abstract class AbstractAvatarPicker implements AvatarPicker {
         final String timeStamp = new SimpleDateFormat(TIMESTAMP_FORMAT, Locale.KOREA).format(new Date());
         try {
             File tempFile = File.createTempFile(timeStamp, ".jpeg", directory);
-            mUri = FileProvider.getUriForFile(getContext(), FILEPROVIDER_AUTHORITY, tempFile);
+            mUri = FileProvider.getUriForFile(getContext(), getFileProviderAuthorities(), tempFile);
         } catch (IllegalArgumentException | IOException e) {
             showToastMsg(e.getMessage());
         }

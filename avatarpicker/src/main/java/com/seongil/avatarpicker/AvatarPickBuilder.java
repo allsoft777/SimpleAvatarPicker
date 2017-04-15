@@ -38,6 +38,7 @@ public class AvatarPickBuilder {
     // ========================================================================
     // fields
     // ========================================================================
+    private static String FILE_PROVIDER_AUTHORITY;
 
     // ========================================================================
     // constructors
@@ -54,19 +55,23 @@ public class AvatarPickBuilder {
     // ========================================================================
     // methods
     // ========================================================================
-    public static AvatarPicker build(@NonNull Fragment fragment) {
+    public static AvatarPicker build(@NonNull Fragment fragment, @NonNull String authorities) {
+        FILE_PROVIDER_AUTHORITY = authorities;
         return new AvatarPickerForFragmentV4(fragment);
     }
 
-    public static AvatarPicker build(@NonNull android.app.Fragment fragment) {
+    public static AvatarPicker build(@NonNull android.app.Fragment fragment, @NonNull String authorities) {
+        FILE_PROVIDER_AUTHORITY = authorities;
         return new AvatarPickerForFragment(fragment);
     }
 
-    public static AvatarPicker build(@NonNull Activity activity) {
+    public static AvatarPicker build(@NonNull Activity activity, @NonNull String authorities) {
+        FILE_PROVIDER_AUTHORITY = authorities;
         return new AvatarPickerForActivity(activity);
     }
 
-    public static AvatarPicker build(@NonNull AppCompatActivity appCompatActivity) {
+    public static AvatarPicker build(@NonNull AppCompatActivity appCompatActivity, @NonNull String authorities) {
+        FILE_PROVIDER_AUTHORITY = authorities;
         return new AvatarPickerForAppCompatActivity(appCompatActivity);
     }
 
@@ -91,6 +96,11 @@ public class AvatarPickBuilder {
         protected void startActivityForResult(@NonNull Intent intent, int requestCode) {
             mFragmentRef.get().startActivityForResult(intent, requestCode);
         }
+
+        @Override
+        protected String getFileProviderAuthorities() {
+            return FILE_PROVIDER_AUTHORITY;
+        }
     }
 
     private static class AvatarPickerForFragment extends AbstractAvatarPicker {
@@ -110,6 +120,11 @@ public class AvatarPickBuilder {
         @Override
         protected void startActivityForResult(@NonNull Intent intent, int requestCode) {
             mFragmentRef.get().startActivityForResult(intent, requestCode);
+        }
+
+        @Override
+        protected String getFileProviderAuthorities() {
+            return FILE_PROVIDER_AUTHORITY;
         }
     }
 
@@ -131,6 +146,11 @@ public class AvatarPickBuilder {
         protected void startActivityForResult(@NonNull Intent intent, int requestCode) {
             mActivityRef.get().startActivityForResult(intent, requestCode);
         }
+
+        @Override
+        protected String getFileProviderAuthorities() {
+            return FILE_PROVIDER_AUTHORITY;
+        }
     }
 
     private static class AvatarPickerForActivity extends AbstractAvatarPicker {
@@ -150,6 +170,11 @@ public class AvatarPickBuilder {
         @Override
         protected void startActivityForResult(@NonNull Intent intent, int requestCode) {
             mActivityRef.get().startActivityForResult(intent, requestCode);
+        }
+
+        @Override
+        protected String getFileProviderAuthorities() {
+            return FILE_PROVIDER_AUTHORITY;
         }
     }
 }
